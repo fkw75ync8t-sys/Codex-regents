@@ -13,6 +13,49 @@ const operationTasks = ['Venue readiness audit', 'Kit inventory sync', 'Transpor
 const subgroupManagerTasks = ['Girls squad progression review', 'Boys communication digest', 'Youth parent onboarding'];
 const coachTasks = ['Build weekly drills', 'Log player welfare notes', 'Review trialist clips'];
 
+type TeamRecord = {
+  team: string;
+  coach: string;
+  players: number;
+  target: number;
+  growth: number;
+};
+
+const boysTeams: TeamRecord[] = [
+  { team: 'U5-U6 Toddlers', coach: 'Keeley', players: 18, target: 16, growth: 4 },
+  { team: 'U7 Toddlers', coach: 'John', players: 15, target: 16, growth: 2 },
+  { team: 'U8 Rebels', coach: 'James N', players: 17, target: 16, growth: 3 },
+  { team: 'U8 Spartans', coach: 'James N', players: 14, target: 16, growth: 1 },
+  { team: 'U9 Rebels', coach: 'James K', players: 19, target: 18, growth: 5 },
+  { team: 'U9 Spartans', coach: 'TBC', players: 12, target: 18, growth: -2 },
+  { team: 'U10 Rebels', coach: 'Rhonan', players: 20, target: 18, growth: 6 },
+  { team: 'U10 Spartans', coach: 'Ben', players: 16, target: 18, growth: 2 },
+  { team: 'U10 Spartan Red', coach: 'Luiz', players: 13, target: 16, growth: -1 },
+  { team: 'U11 Rebels', coach: 'Shay', players: 18, target: 18, growth: 3 },
+  { team: 'U11 Spartans', coach: 'Paris', players: 15, target: 18, growth: 1 },
+  { team: 'U9-U11 Midweek', coach: 'Shared staff', players: 22, target: 20, growth: 7 }
+];
+
+const totalPlayers = boysTeams.reduce((sum, team) => sum + team.players, 0);
+const aboveTarget = boysTeams.filter((team) => team.players > team.target);
+const belowTarget = boysTeams.filter((team) => team.players < team.target);
+const biggestGrowthTeam = boysTeams.reduce((top, team) => (team.growth > top.growth ? team : top), boysTeams[0]);
+const redFlagTeams = boysTeams.filter((team) => team.players - team.target <= -3);
+
+const statusBadge = (gap: number) => {
+  if (gap >= 2) return 'Ahead';
+  if (gap >= 0) return 'On target';
+  if (gap <= -3) return 'Red flag';
+  return 'Watch';
+};
+
+const statusClasses = (status: string) => {
+  if (status === 'Ahead') return 'border-emerald-300/30 bg-emerald-500/15 text-emerald-200';
+  if (status === 'On target') return 'border-cyan-300/30 bg-cyan-500/15 text-cyan-100';
+  if (status === 'Red flag') return 'border-rose-300/30 bg-rose-500/15 text-rose-100';
+  return 'border-amber-300/30 bg-amber-500/15 text-amber-100';
+};
+
 export default function Home() {
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 lg:px-10">
@@ -22,11 +65,68 @@ export default function Home() {
         <p className="mt-2 text-slate-300">Owner dashboard • Premium sports-tech control center</p>
       </header>
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <div className="panel p-5"><p className="text-sm text-cyan-200">Player numbers</p><p className="mt-3 text-3xl font-semibold">286</p><p className="text-xs text-emerald-300">+12 this month</p></div>
-        <div className="panel p-5"><p className="text-sm text-cyan-200">Attendance snapshot</p><p className="mt-3 text-3xl font-semibold">91%</p><p className="text-xs text-emerald-300">On-time arrivals: 87%</p></div>
-        <div className="panel p-5"><p className="text-sm text-cyan-200">Trialist sign ups</p><p className="mt-3 text-3xl font-semibold">44</p><p className="text-xs text-amber-300">Pending confirmation: 9</p></div>
-        <div className="panel p-5"><p className="text-sm text-cyan-200">Trialist not signed up</p><p className="mt-3 text-3xl font-semibold">17</p><p className="text-xs text-slate-300">Top reason: timing conflict</p></div>
+      <section className="panel p-6">
+        <h2 className="text-2xl font-semibold text-white">Boys U6-U11 Numbers Dashboard</h2>
+        <div className="mt-5 overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-700 text-cyan-200">
+                <th className="px-3 py-3 font-medium">Team</th>
+                <th className="px-3 py-3 font-medium">Coach</th>
+                <th className="px-3 py-3 font-medium">Player Numbers</th>
+                <th className="px-3 py-3 font-medium">Target</th>
+                <th className="px-3 py-3 font-medium">Gap</th>
+                <th className="px-3 py-3 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {boysTeams.map((team) => {
+                const gap = team.players - team.target;
+                const status = statusBadge(gap);
+                return (
+                  <tr key={team.team} className="border-b border-slate-800/80 text-slate-100">
+                    <td className="px-3 py-3 font-medium">{team.team}</td>
+                    <td className="px-3 py-3 text-slate-300">{team.coach}</td>
+                    <td className="px-3 py-3">{team.players}</td>
+                    <td className="px-3 py-3">{team.target}</td>
+                    <td className={`px-3 py-3 font-semibold ${gap < 0 ? 'text-rose-200' : 'text-emerald-200'}`}>
+                      {gap > 0 ? `+${gap}` : gap}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusClasses(status)}`}>
+                        {status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-xl border border-cyan-200/20 bg-slate-950/40 p-4">
+            <p className="text-sm text-cyan-200">Total Boys U6-U11 numbers</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{totalPlayers}</p>
+          </div>
+          <div className="rounded-xl border border-emerald-300/20 bg-emerald-500/10 p-4">
+            <p className="text-sm text-emerald-200">Teams above target</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{aboveTarget.length}</p>
+          </div>
+          <div className="rounded-xl border border-amber-300/20 bg-amber-500/10 p-4">
+            <p className="text-sm text-amber-200">Teams below target</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{belowTarget.length}</p>
+          </div>
+          <div className="rounded-xl border border-cyan-300/20 bg-cyan-500/10 p-4">
+            <p className="text-sm text-cyan-100">Biggest growth team</p>
+            <p className="mt-2 text-lg font-semibold text-white">{biggestGrowthTeam.team}</p>
+            <p className="text-xs text-cyan-200">+{biggestGrowthTeam.growth} vs last month</p>
+          </div>
+          <div className="rounded-xl border border-rose-300/20 bg-rose-500/10 p-4">
+            <p className="text-sm text-rose-100">Red flag teams</p>
+            <p className="mt-2 text-lg font-semibold text-white">{redFlagTeams.length ? redFlagTeams.map((team) => team.team).join(', ') : 'None'}</p>
+          </div>
+        </div>
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-3">
